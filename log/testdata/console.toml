@@ -1,0 +1,5 @@
+type = "console"
+source = false
+handler = "stdout"
+time = "Kitchen"
+nocolor = true
