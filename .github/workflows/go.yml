@@ -20,6 +20,6 @@ jobs:
       #  with:
       #    version: v1.54
       #    args: $(find . -depth 1 -type dir -not \( -name ".git" -or -name ".github" \))
-      - run: find . -type d -depth 1 -not \( -name '.git' -or -name '.github' \) -exec go vet {} \;
-      - run: find . -type d -depth 1 -not \( -name '.git' -or -name '.github' \) -exec go test {} \;
-      - run: find . -type d -depth 1 -not \( -name '.git' -or -name '.github' \) -exec go test -race {} \;
+      - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go vet {} \;
+      - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go test {} \;
+      - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go test -race {} \;
