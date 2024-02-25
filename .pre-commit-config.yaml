@@ -1,0 +1,69 @@
+---
+fail_fast: true
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier
+          - prettier-plugin-toml
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+  - repo: https://github.com/sirosen/texthooks
+    rev: 0.6.4
+    hooks:
+      - id: fix-smartquotes
+      - id: fix-spaces
+      - id: fix-ligatures
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-crlf
+      - id: remove-crlf
+      - id: forbid-tabs
+      - id: remove-tabs
+        args: [--whitespaces-count, "2"]
+  - repo: https://github.com/sirosen/check-jsonschema
+    rev: 0.28.0
+    hooks:
+      - id: check-github-workflows
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-aws-credentials
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: requirements-txt-fixer
+      - id: fix-byte-order-marker
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.35.1
+  #   hooks:
+  #     - id: yamllint
+  #       args:
+  #         - --config-file
+  #         - .yamllint.yaml
+  # - repo: https://github.com/ansible-community/ansible-lint
+  #   rev: v24.2.0
+  #   hooks:
+  #     - id: ansible-lint
+  #       entry: bash -c 'cd provision/ansible && ansible-lint --force-color'
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/sirwart/ripsecrets
+    rev: v0.1.7
+    hooks:
+      - id: ripsecrets
