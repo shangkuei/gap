@@ -1,6 +1,6 @@
 module github.com/shangkuei/gap/log
 
-go 1.22.0
+go 1.22
 
 require (
 	github.com/creasty/defaults v1.7.0
