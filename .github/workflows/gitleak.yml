@@ -1,4 +1,4 @@
-name: Gt itleaks
+name: Gitleaks
 
 on:
   pull_request:
