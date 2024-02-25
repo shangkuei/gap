@@ -16,11 +16,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 1.22.x
-      #- uses: golangci/golangci-lint-action@v4.0.0
-      #  with:
-      #    version: v1.54
-      #    args: $(find . -depth 1 -type dir -not \( -name ".git" -or -name ".github" \))
       - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go get {} \;
       - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go vet {} \;
       - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go test {} \;
       - run: find . -type d -maxdepth 1 -not \( -name '.git' -or -name '.github' \) -exec go test -race {} \;
+      - uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          version: "2022.1.3"
