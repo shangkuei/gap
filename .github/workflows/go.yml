@@ -31,6 +31,6 @@ jobs:
         with:
           version: latest
           install-go: false
-          cache-key: ${{ matrix.dir }}
+          cache-key: ${{ hashFiles(format('{0}/go.sum', matrix.dir)) }}
           working-directory: ${{ matrix.dir }}
       - uses: pre-commit/action@v3.0.1
