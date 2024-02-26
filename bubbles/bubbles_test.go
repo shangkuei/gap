@@ -1,6 +1,7 @@
 package bubbles
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"testing"
@@ -9,8 +10,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	helper "github.com/shangkuei/gap/testhelper"
 )
+
+func init() {
+	helper.Trace = false
+}
 
 var compareTeaCmd = cmp.Comparer(func(a, b tea.Cmd) bool {
 	if reflect.ValueOf(a).Pointer() == reflect.ValueOf(b).Pointer() {
@@ -48,10 +53,16 @@ func TestSequence(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Sequence(tt.args...)
 			if tt.want == nil {
-				assert.Nil(t, got)
+				if diff, ok := helper.Equal(got, tea.Cmd(nil)); !ok {
+					t.Error(helper.Message(t, "expected nil tea.Cmd", diff))
+				}
 			} else {
-				assert.NotNil(t, got)
-				assert.True(t, cmp.Equal(got(), tt.want, compareTeaCmd), cmp.Diff(got(), tt.want, compareTeaCmd))
+				if _, ok := helper.Equal(got, tea.Cmd(nil)); ok {
+					t.Error(helper.Message(t, "unexpected nil tea.Cmd"))
+				}
+				if diff, ok := helper.Equal(got(), tt.want, compareTeaCmd); !ok {
+					t.Error(helper.Message(t, "unexpected tea.Cmd", diff))
+				}
 			}
 		})
 	}
@@ -86,10 +97,16 @@ func TestBatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Batch(tt.args...)
 			if tt.want == nil {
-				assert.Nil(t, got)
+				if diff, ok := helper.Equal(got, tea.Cmd(nil)); !ok {
+					t.Error(helper.Message(t, "expected nil tea.Cmd", diff))
+				}
 			} else {
-				assert.NotNil(t, got)
-				assert.True(t, cmp.Equal(got(), tt.want, compareTeaCmd), cmp.Diff(got(), tt.want, compareTeaCmd))
+				if _, ok := helper.Equal(got, tea.Cmd(nil)); ok {
+					t.Error(helper.Message(t, "unexpected nil tea.Cmd"))
+				}
+				if diff, ok := helper.Equal(got(), tt.want, compareTeaCmd); !ok {
+					t.Error(helper.Message(t, "unexpected tea.Cmd", diff))
+				}
 			}
 		})
 	}
@@ -137,10 +154,16 @@ func TestFilter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Filter(tt.args.model, tt.args.msg)
 			if tt.want == nil {
-				assert.Nil(t, got)
+				if diff, ok := helper.Equal(got, tea.Msg(nil)); !ok {
+					t.Error(helper.Message(t, "expected nil tea.Msg", diff))
+				}
 			} else {
-				assert.NotNil(t, got)
-				assert.True(t, cmp.Equal(got, tt.want, compareTeaCmd), cmp.Diff(got, tt.want, compareTeaCmd))
+				if _, ok := helper.Equal(got, tea.Cmd(nil)); ok {
+					t.Error(helper.Message(t, "unexpected nil tea.Msg"))
+				}
+				if diff, ok := helper.Equal(got, tt.want, compareTeaCmd); !ok {
+					t.Error(helper.Message(t, "unexpected tea.Msg", diff))
+				}
 			}
 		})
 	}
@@ -216,10 +239,16 @@ func TestNest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Nest(tt.args.model, tt.args.cmd)
 			if tt.want == nil {
-				assert.Nil(t, got)
+				if diff, ok := helper.Equal(got, tea.Cmd(nil)); !ok {
+					t.Error(helper.Message(t, "expected nil tea.Cmd", diff))
+				}
 			} else {
-				assert.NotNil(t, got)
-				assert.True(t, cmp.Equal(got(), tt.want, compareTeaCmd), cmp.Diff(got(), tt.want, compareTeaCmd))
+				if _, ok := helper.Equal(got, tea.Cmd(nil)); ok {
+					t.Error(helper.Message(t, "unexpected nil tea.Cmd"))
+				}
+				if diff, ok := helper.Equal(got(), tt.want, compareTeaCmd); !ok {
+					t.Error(helper.Message(t, "unexpected tea.Cmd", diff))
+				}
 			}
 		})
 	}
@@ -273,21 +302,22 @@ func TestNestedModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var (
-				model NestedModel
-				ok    bool
-			)
-			model = tt.model
-			cmd := model.Init()
-			assert.True(t, cmp.Equal(cmd, tt.wantInit, compareTeaCmd), cmp.Diff(cmd, tt.wantInit, compareTeaCmd))
-
-			m, cmd := model.Update(Nest(id, func() tea.Msg { return fieldMsg{field: "field"} })())
-			assert.Nil(t, cmd)
-			model, ok = m.(NestedModel)
-			if !assert.True(t, ok) {
-				t.Fail()
+			cmd := tt.model.Init()
+			if diff, ok := helper.Equal(cmd, tt.wantInit, compareTeaCmd); !ok {
+				t.Error(helper.Message(t, "expected tea.Cmd", diff))
 			}
-			assert.Equal(t, tt.wantModel, model)
+
+			model, cmd := tt.model.Update(Nest(id, func() tea.Msg { return fieldMsg{field: "field"} })())
+			if diff, ok := helper.Equal(cmd, tea.Cmd(nil)); !ok {
+				t.Error(helper.Message(t, "expected nil tea.Cmd", diff))
+			}
+			model, ok := model.(NestedModel)
+			if !ok {
+				t.Error(helper.Message(t, "expected NestedModel", fmt.Sprintf("got: %T", model)))
+			}
+			if diff, ok := helper.Equal(model, tt.wantModel, cmp.AllowUnexported(nestedModel{}), cmp.AllowUnexported(idModel{})); !ok {
+				t.Error(helper.Message(t, "unexpected NestedModel", diff))
+			}
 		})
 	}
 }
@@ -326,8 +356,12 @@ func TestUpdateTickModel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			model, cmd := UpdateTickModel(tt.model, TickMsg(time.Now()))
-			assert.Equal(t, tt.model, model)
-			assert.NotNil(t, cmd)
+			if _, ok := helper.Equal(cmd, tea.Cmd(nil)); ok {
+				t.Error(helper.Message(t, "unexpected nil tea.Cmd"))
+			}
+			if diff, ok := helper.Equal(model, tt.model); !ok {
+				t.Error(helper.Message(t, "unexpected TickModel", diff))
+			}
 		})
 	}
 }
@@ -380,8 +414,12 @@ func TestCmd(t *testing.T) {
 				ch <- func() tea.Msg { return cmdMsg{} }
 			}()
 			model, cmd := tt.model.Update(Cmd(tt.model)())
-			assert.Nil(t, cmd)
-			assert.Equal(t, tt.want, model)
+			if diff, ok := helper.Equal(cmd, tea.Cmd(nil)); !ok {
+				t.Error(helper.Message(t, "expected nil tea.Cmd", diff))
+			}
+			if diff, ok := helper.Equal(model, tt.want, cmp.AllowUnexported(cmdModel{})); !ok {
+				t.Error(helper.Message(t, "unexpected CmdModel", diff))
+			}
 		})
 	}
 }

@@ -4,6 +4,7 @@ use (
 	./bubbles
 	./json
 	./log
+	./testhelper
 	./toml
 	./yaml
 )
