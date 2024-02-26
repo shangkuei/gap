@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"encoding/json"
 	"reflect"
 
 	"github.com/goccy/go-yaml"
@@ -26,7 +25,7 @@ func DecodeYAMLUnmarshalFunc(from reflect.Type, to reflect.Type, d interface{}) 
 		return d, nil
 	}
 
-	data, err := json.Marshal(d)
+	data, err := yaml.Marshal(d)
 	if err != nil {
 		return nil, err
 	}
