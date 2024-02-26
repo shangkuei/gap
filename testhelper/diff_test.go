@@ -38,12 +38,7 @@ func TestEqual(t *testing.T) {
 				},
 				opts: []cmp.Option{cmp.AllowUnexported(equalA{})},
 			},
-			wantDiff: `Diff(-got,+want):
-	  helper.equalA{
-	- 	unexported: "unexported",
-	+ 	unexported: "",
-	  	Exported:   "exported",
-	  }`,
+			wantDiff: "Diff(-got,+want):\n\t  helper.equalA{\n\t- \tunexported: \"unexported\",\n\t+ \tunexported: \"\",\n\t  \tExported:   \"exported\",\n\t  }",
 		},
 		{
 			name: "same struct",
@@ -66,12 +61,8 @@ func TestEqual(t *testing.T) {
 				got:  equalA{},
 				want: equalB{},
 			},
-			wantDiff: `Diff(-got,+want):
-	  any(
-	- 	helper.equalA{},
-	+ 	helper.equalB{},
-	  )`,
-			wantOk: false,
+			wantDiff: "Diff(-got,+want):\n\t  any(\n\t- \thelper.equalA{},\n\t+ \thelper.equalB{},\n\t  )",
+			wantOk:   false,
 		},
 	}
 	for _, tt := range tests {
@@ -80,6 +71,7 @@ func TestEqual(t *testing.T) {
 			if got, want := gotDiff, tt.wantDiff; got != want {
 				t.Errorf("Equal() got = %v, want %v", got, want)
 			}
+			t.Log(cmp.Diff(gotDiff, tt.wantDiff))
 			if got, want := gotOk, tt.wantOk; got != want {
 				t.Errorf("Equal() got = %v, want %v", got, want)
 			}
