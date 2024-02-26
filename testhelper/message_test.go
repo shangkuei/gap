@@ -39,7 +39,7 @@ func TestMessage(t *testing.T) {
 Message: happy path
 Case: TestMessage
 Error Trace:
-	/Users/schen07/Devs/shangkuei/gap/testhelper/message_test.go:47 testhelper.TestMessage.func3`,
+	testhelper/message_test.go:47 testhelper.TestMessage.func3`,
 		},
 	}
 	for _, tt := range tests {
