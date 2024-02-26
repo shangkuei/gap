@@ -3,8 +3,8 @@ package yaml
 import (
 	"io"
 
+	"github.com/goccy/go-yaml"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v3"
 )
 
 // Decode decodes yaml encoded data from the reader and stores the result in the value pointed to by result.

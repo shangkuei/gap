@@ -3,7 +3,7 @@ package yaml
 import (
 	"io"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 // EncodeOption is a type for functional options for the Encode function.
@@ -18,7 +18,6 @@ func Encode[S any](writer io.Writer, data S, opts ...func(*EncodeOption)) error 
 		fn(&opt)
 	}
 
-	encoder := yaml.NewEncoder(writer)
-	encoder.SetIndent(opt.Indent)
+	encoder := yaml.NewEncoder(writer, yaml.Indent(opt.Indent))
 	return encoder.Encode(data)
 }
