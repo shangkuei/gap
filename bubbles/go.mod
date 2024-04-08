@@ -1,4 +1,4 @@
-module shangkuei.xyz/gap/bubbles
+module github.com/shangkuei/gap/bubbles
 
 go 1.22
 
