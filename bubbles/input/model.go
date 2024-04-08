@@ -16,10 +16,10 @@ type Model struct {
 
 	BlurPrompt   string                 // BlurPrompt controls the prompt to display in blur mode.
 	FocusPrompt  string                 // FocusPrompt controls the prompt to display in focus mode.
-	Validate     func(str string) error // Validate validsts the value to dislay input with style.
-	TextStyle    lipgloss.Style         //TextSyle applys in blur mode.
-	ValidStyle   lipgloss.Style         // ValidStyle applys when the input is valid in focus mode.
-	InvalidStyle lipgloss.Style         //InvalidStyle applys when the input in invalid in focus mode.
+	Validate     func(str string) error // Validate validsts the value to display input with style.
+	TextStyle    lipgloss.Style         //TextSyle applies in blur mode.
+	ValidStyle   lipgloss.Style         // ValidStyle applies when the input is valid in focus mode.
+	InvalidStyle lipgloss.Style         //InvalidStyle applies when the input in invalid in focus mode.
 
 	id uuid.UUID
 	mu sync.RWMutex
