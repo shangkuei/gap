@@ -1,152 +1,194 @@
 package input
 
 import (
-	"sync"
-
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+	"github.com/muesli/reflow/ansi"
+	"github.com/shangkuei/gap/bubbles"
 )
 
 // Model displays the content with terminal style.
-// Model is thread-safe after running Init().
 type Model struct {
-	Input textinput.Model
-
 	BlurPrompt   string                 // BlurPrompt controls the prompt to display in blur mode.
 	FocusPrompt  string                 // FocusPrompt controls the prompt to display in focus mode.
 	Validate     func(str string) error // Validate validsts the value to display input with style.
-	TextStyle    lipgloss.Style         //TextSyle applies in blur mode.
+	TextStyle    lipgloss.Style         // TextSyle applies in blur mode.
 	ValidStyle   lipgloss.Style         // ValidStyle applies when the input is valid in focus mode.
 	InvalidStyle lipgloss.Style         //InvalidStyle applies when the input in invalid in focus mode.
 
-	id uuid.UUID
-	mu sync.RWMutex
+	id     uuid.UUID
+	input  textinput.Model
+	cached string
+	width  int
 }
 
-func (m *Model) Init() tea.Cmd {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// New creates a new input model.
+func New(opts ...func(Model) Model) Model {
+	model := Model{
+		id:    uuid.New(),
+		input: textinput.New(),
+	}
+	model.input.KeyMap = textinput.KeyMap{
+		CharacterForward: key.NewBinding(
+			key.WithKeys("right"),
+			key.WithHelp("→", ""),
+		),
+		CharacterBackward: key.NewBinding(
+			key.WithKeys("left"),
+			key.WithHelp("←", ""),
+		),
+		DeleteCharacterBackward: key.NewBinding(
+			key.WithKeys("backspace"),
+			key.WithHelp("BS", ""),
+		),
+		DeleteCharacterForward: key.NewBinding(
+			key.WithKeys("delete"),
+			key.WithHelp("DEL", ""),
+		),
+		LineStart: key.NewBinding(
+			key.WithKeys("home"),
+			key.WithHelp("HOME", ""),
+		),
+		LineEnd: key.NewBinding(
+			key.WithKeys("end"),
+			key.WithHelp("END", ""),
+		),
+		Paste: key.NewBinding(
+			key.WithKeys("ctrl+v"),
+			key.WithHelp("ctrl+v", "貼上"),
+		),
+		AcceptSuggestion: key.NewBinding(
+			key.WithKeys("tab"),
+			key.WithHelp("Tab", "套用"),
+		),
+		NextSuggestion: key.NewBinding(
+			key.WithKeys("down"),
+			key.WithHelp("↓", ""),
+		),
+		PrevSuggestion: key.NewBinding(
+			key.WithKeys("up"),
+			key.WithHelp("↑", ""),
+		),
+	}
+	for _, opt := range opts {
+		model = opt(model)
+	}
+	return model
+}
 
-	m.id = uuid.New()
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.Input, cmd = m.Input.Update(msg)
+func (m Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
+	m.input, cmd = m.input.Update(msg)
 	return m, cmd
 }
 
-func (m *Model) View() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	var style lipgloss.Style
-	if m.Input.Focused() && m.Validate != nil {
-		m.Input.Prompt = m.FocusPrompt
-		if m.Validate == nil || m.Validate(m.Input.Value()) == nil {
-			m.Input.TextStyle = m.ValidStyle
-			m.Input.Cursor.TextStyle = m.ValidStyle
+func (m Model) View() string {
+	if m.input.Focused() {
+		m.input.Prompt = m.FocusPrompt
+		if m.Validate == nil || m.Validate(m.input.Value()) == nil {
+			m.input.TextStyle = m.ValidStyle
+			m.input.Cursor.TextStyle = m.ValidStyle
 		} else {
-			m.Input.TextStyle = m.InvalidStyle
-			m.Input.Cursor.TextStyle = m.InvalidStyle
+			m.input.TextStyle = m.InvalidStyle
+			m.input.Cursor.TextStyle = m.InvalidStyle
 		}
 	} else {
-		m.Input.Prompt = m.BlurPrompt
-		m.Input.TextStyle = m.TextStyle
-		m.Input.Cursor.TextStyle = m.TextStyle
+		m.input.Prompt = m.BlurPrompt
+		m.input.TextStyle = m.TextStyle
+		m.input.Cursor.TextStyle = m.TextStyle
 	}
 
-	return style.Render(m.Input.View())
+	// the textinput v0.18.0 doesn't count prompt length.
+	m.input.Width = m.width - ansi.PrintableRuneWidth(m.input.Prompt) - 1
+	return m.input.View()
 }
 
-func (m *Model) ID() uuid.UUID {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
+func (m Model) ID() uuid.UUID {
 	return m.id
 }
 
-func (m *Model) Value() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	return m.Input.Value()
+func (m Model) Value() string {
+	return m.input.Value()
 }
 
 func (m *Model) SetValue(str string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	if m.Validate != nil {
 		if err := m.Validate(str); err != nil {
 			return false
 		}
 	}
-	m.Input.SetValue(str)
+	m.cached = str
+	m.cached = str
+	m.input.SetValue(str)
 	return true
 }
 
-func (m *Model) Focused() bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	return m.Input.Focused()
+func (m *Model) EnableSuggestion(value bool) {
+	m.input.ShowSuggestions = value
 }
 
-func (m *Model) Focus() (bool, tea.Cmd) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.Input.Cursor.Blink = true
-	return true, m.Input.Focus()
+func (m *Model) SetSuggestions(suggestions []string) {
+	m.input.SetSuggestions(suggestions)
 }
 
-func (m *Model) Blur() (bool, tea.Cmd) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (m Model) Focused() bool {
+	return m.input.Focused()
+}
 
-	if m.Validate != nil {
-		if err := m.Validate(m.Input.Value()); err == nil {
-			m.Input.Cursor.Blink = false
-			m.Input.Blur()
-			return true, nil
-		} else {
-			return false, nil
+func (m *Model) Focus() tea.Cmd {
+	m.input.Focus()
+	return nil
+}
+
+func (m *Model) Blur() tea.Cmd {
+	if m.Validate != nil && m.Validate(m.input.Value()) != nil {
+		if m.cached == "" {
+			return nil
 		}
+		m.input.SetValue(m.cached)
 	}
-	m.Input.Blur()
-	return true, nil
-}
-
-func (m *Model) String() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	return m.View()
+	m.input.Blur()
+	return nil
 }
 
 func (m *Model) SetWidth(width int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.Input.Width = width
+	m.width = width
 }
 
-func (m *Model) Height() int {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
+func (m Model) Height() int {
 	return 1
 }
 
-func (m *Model) Width() int {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	return m.Input.Width
+func (m Model) Width() int {
+	return m.width
 }
+
+func (m Model) KeyBindings() (bindings []key.Binding) {
+	bindings = append(bindings,
+		m.input.KeyMap.CharacterBackward,
+		m.input.KeyMap.CharacterForward,
+	)
+	if m.input.ShowSuggestions {
+		bindings = append(bindings,
+			m.input.KeyMap.NextSuggestion,
+			m.input.KeyMap.PrevSuggestion,
+			m.input.KeyMap.AcceptSuggestion,
+		)
+	}
+	bindings = append(bindings,
+		m.input.KeyMap.Paste,
+		m.input.KeyMap.DeleteCharacterBackward,
+		m.input.KeyMap.DeleteCharacterForward,
+		m.input.KeyMap.LineStart,
+		m.input.KeyMap.LineEnd,
+	)
+	return bindings
+}
+
+var _ bubbles.FocusModel = (*Model)(nil)
