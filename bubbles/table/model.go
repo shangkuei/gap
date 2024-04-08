@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/google/uuid"
-	"shangkuei.xyz/gap/bubbles"
+	"github.com/shangkuei/gap/bubbles"
 )
 
 // Model defines a state for the table widget.
