@@ -183,13 +183,11 @@ func (m idModel) ID() uuid.UUID {
 }
 
 func (m idModel) Init() tea.Cmd {
-	return func() tea.Msg { return IDMsg{} }
+	return func() tea.Msg { return nil }
 }
 
 func (m idModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case IDMsg:
-		m.id = uuid.New()
 	case fieldMsg:
 		m.field = msg.field
 	}
@@ -262,12 +260,16 @@ func (m nestedModel) IDModels() []IDModel {
 	return m.models
 }
 
-func (m nestedModel) UpdateIDModel(model IDModel) NestedModel {
+func (m nestedModel) UpdateNestedMsg(msg NestedMsg) (NestedModel, tea.Cmd) {
 	index := slices.IndexFunc(m.models, func(i IDModel) bool {
-		return i.ID() == model.ID()
+		return i.ID() == msg.ID
 	})
-	m.models = slices.Replace(m.models, index, index+1, model)
-	return m
+	if index == -1 {
+		return m, nil
+	}
+	model, cmd := m.models[index].Update(msg.Msg)
+	m.models = slices.Replace(m.models, index, index+1, model.(IDModel))
+	return m, cmd
 }
 
 func (m nestedModel) Init() tea.Cmd {
@@ -334,7 +336,7 @@ func (m tickModel) Init() tea.Cmd {
 }
 
 func (m tickModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return UpdateTickModel(m, msg)
+	return m, Tick(m)
 }
 
 func (m tickModel) View() string {
@@ -355,12 +357,9 @@ func TestUpdateTickModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			model, cmd := UpdateTickModel(tt.model, TickMsg(time.Now()))
+			cmd := UpdateTickModel(tt.model, TickMsg(time.Now()))
 			if _, ok := helper.Equal(cmd, tea.Cmd(nil)); ok {
 				t.Error(helper.Message(t, "unexpected nil tea.Cmd"))
-			}
-			if diff, ok := helper.Equal(model, tt.model); !ok {
-				t.Error(helper.Message(t, "unexpected TickModel", diff))
 			}
 		})
 	}

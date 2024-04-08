@@ -129,6 +129,12 @@ func Nest(model IDModel, cmd tea.Cmd) tea.Cmd {
 				cmds = append(cmds, Nest(model, cmd))
 			}
 			return cmds
+		case tea.BatchMsg:
+			var cmds BatchMsg
+			for _, cmd := range msg {
+				cmds = append(cmds, Nest(model, cmd))
+			}
+			return cmds
 		}
 		return NestedMsg{
 			ID:  model.ID(),
@@ -140,7 +146,7 @@ func Nest(model IDModel, cmd tea.Cmd) tea.Cmd {
 // NestedModel is a model that has nested models.
 type NestedModel interface {
 	IDModels() []IDModel
-	UpdateIDModel(IDModel) NestedModel
+	UpdateNestedMsg(NestedMsg) (NestedModel, tea.Cmd)
 
 	tea.Model
 }
@@ -159,20 +165,13 @@ func InitNested(m NestedModel) tea.Cmd {
 }
 
 // UpdateNested passed the dedicated tea.Msg to nested model.
-func UpdateNestedModel(m NestedModel, msg tea.Msg) (tea.Model, tea.Cmd) {
+func UpdateNestedModel(m NestedModel, msg tea.Msg) (NestedModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case NestedMsg:
-		for _, model := range m.IDModels() {
-			if msg.ID == model.ID() {
-				nested, cmd := model.Update(msg.Msg)
-				if model, ok := nested.(IDModel); ok {
-					m = m.UpdateIDModel(model)
-				}
-				return m, Nest(model, cmd)
-			}
-		}
+		return m.UpdateNestedMsg(msg)
+	default:
+		return m, nil
 	}
-	return m, nil
 }
 
 // TickModel is a model that updates on a tick.
@@ -193,12 +192,12 @@ func Tick(m TickModel) tea.Cmd {
 }
 
 // TickUpdate updates the model with a tick.
-func UpdateTickModel(m TickModel, msg tea.Msg) (tea.Model, tea.Cmd) {
+func UpdateTickModel(m TickModel, msg tea.Msg) tea.Cmd {
 	switch msg.(type) {
 	case TickMsg:
-		return m, Tick(m)
+		return Tick(m)
 	}
-	return m, nil
+	return nil
 }
 
 // CmdModel is a model that has a channel of tea.Cmd.

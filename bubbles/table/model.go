@@ -3,7 +3,6 @@ package table
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -12,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/google/uuid"
-	"github.com/shangkuei/gap/bubbles"
+	"shangkuei.xyz/gap/bubbles"
 )
 
 // Model defines a state for the table widget.
@@ -144,45 +143,47 @@ func DefaultStyles() Styles {
 	}
 }
 
-func New(columns []Column, opts ...func(Model) Model) Model {
-	model := Model{
+func New(columns []Column, opts ...func(*Model)) *Model {
+	m := &Model{
 		KeyMap:  DefaultKeyMap(),
 		Styles:  DefaultStyles(),
 		columns: columns,
-		id:      uuid.New(),
 	}
-	model.cursorRow = 0
-	model.cursorColumn = slices.IndexFunc(model.columns, func(col Column) bool {
-		return col.Cursor
-	})
-	left, right, length := -1, len(model.columns), len(model.columns)
-	for i := 0; i < len(model.columns); i++ {
-		if model.columns[i].Cursor {
-			model.columns[i].left, left = left, i
-		} else {
-			model.columns[i].left = -1
-		}
-		if model.columns[length-1-i].Cursor {
-			model.columns[length-1-i].right, right = right, length-1-i
-		} else {
-			model.columns[length-1-i].right = -1
-		}
-		model.minWidth += model.columns[i].Width
-	}
-
 	for _, opt := range opts {
-		model = opt(model)
+		opt(m)
 	}
-	return model
+	return m
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
+	m.id = uuid.New()
+	left, right, length := -1, len(m.columns), len(m.columns)
+	m.cursorRow = 0
+	for i := 0; i < len(m.columns); i++ {
+		if m.columns[i].Cursor {
+			m.columns[i].left, left = left, i
+		} else {
+			m.columns[i].left = -1
+		}
+		if m.columns[length-1-i].Cursor {
+			m.columns[length-1-i].right, right = right, length-1-i
+		} else {
+			m.columns[length-1-i].right = -1
+		}
+		m.minWidth += m.columns[i].Width
+	}
+	for i, column := range m.columns {
+		if column.Cursor {
+			m.cursorColumn = i
+			break
+		}
+	}
 	return nil
 }
 
 // Update is the Bubble Tea update loop.
-func (m Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
-	if !m.Focused() {
+func (m *Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
+	if !m.focus {
 		return m, nil
 	}
 
@@ -213,39 +214,35 @@ func (m Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 }
 
 // View renders the component.
-func (m Model) View() string {
+func (m *Model) View() string {
 	return m.viewport.View()
 }
 
-func (m Model) ID() uuid.UUID {
+func (m *Model) ID() uuid.UUID {
 	return m.id
 }
 
 // Focused returns the focus state of the table.
-func (m Model) Focused() bool {
+func (m *Model) Focused() bool {
 	return m.focus
 }
 
 // Focus focuses the table, allowing the user to move around the rows and
 // interact.
-func (m *Model) Focus() tea.Cmd {
-	return func() tea.Msg {
-		m.focus = true
-		m.UpdateViewport()
-		return nil
-	}
+func (m *Model) Focus() (bool, tea.Cmd) {
+	m.focus = true
+	m.UpdateViewport()
+	return true, nil
 }
 
 // Blur blurs the table, preventing selection or movement.
-func (m *Model) Blur() tea.Cmd {
-	return func() tea.Msg {
-		m.focus = false
-		m.UpdateViewport()
-		return nil
-	}
+func (m *Model) Blur() (bool, tea.Cmd) {
+	m.focus = false
+	m.UpdateViewport()
+	return true, nil
 }
 
-func (m Model) Cell() (any, error) {
+func (m *Model) Cell() (any, error) {
 	if len(m.rows) <= m.cursorRow {
 		return nil, errors.New("nonexistence cell")
 	}
@@ -306,17 +303,17 @@ func (m *Model) SetWindow(height, width int) {
 }
 
 // Width returns the viewport width of the table.
-func (m Model) Width() int {
+func (m *Model) Width() int {
 	return m.viewport.Width
 }
 
 // Height returns the viewport height of the table.
-func (m Model) Height() int {
+func (m *Model) Height() int {
 	return m.viewport.Height
 }
 
 // Cursor returns the index of the selected row.
-func (m Model) Cursor() (int, int) {
+func (m *Model) Cursor() (int, int) {
 	return m.cursorRow, m.cursorColumn
 }
 
