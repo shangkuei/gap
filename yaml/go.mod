@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/shangkuei/gap/testhelper v0.0.0-00010101000000-000000000000
+	github.com/shangkuei/gap/testhelper v0.0.1
 )
 
 require (

@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
-	github.com/shangkuei/gap/testhelper v0.0.0-20240226162427-055a0099b539
+	github.com/shangkuei/gap/testhelper v0.0.1
 )
 
 require (
@@ -31,3 +31,5 @@ require (
 	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
+
+replace github.com/shangkuei/gap/testhelper => ../testhelper

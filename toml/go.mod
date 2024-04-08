@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pelletier/go-toml/v2 v2.2.0
-	github.com/shangkuei/gap/testhelper v0.0.0-00010101000000-000000000000
+	github.com/shangkuei/gap/testhelper v0.0.1
 )
 
 require (
