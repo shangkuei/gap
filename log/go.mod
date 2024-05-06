@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/creasty/defaults v1.7.0
-	github.com/go-playground/validator/v10 v10.19.0
+	github.com/go-playground/validator/v10 v10.20.0
 	github.com/lmittmann/tint v1.0.4
 	github.com/mattn/go-colorable v0.1.13
 	github.com/spf13/afero v1.11.0
