@@ -13,7 +13,13 @@ jobs:
     strategy:
       matrix:
         dir:
-          ["./bubbles", "./json", "./log", "./sqlutil", "./testhelper", "./toml", "./yaml"]
+          - "./bubbles"
+          - "./json"
+          - "./log"
+          - "./sqlutil"
+          - "./testhelper"
+          - "./toml"
+          - "./yaml"
     defaults:
       run:
         working-directory: ${{ matrix.dir }}
