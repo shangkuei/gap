@@ -4,6 +4,7 @@ use (
 	./bubbles
 	./json
 	./log
+	./sqlutil
 	./testhelper
 	./toml
 	./yaml
