@@ -72,7 +72,7 @@ func NewConn(ctx context.Context, db SQL, opts ...func(*Conn)) (conn *Conn) {
 	return conn
 }
 
-// Conn implments DB helpers.
+// Conn implements DB helpers.
 type Conn struct {
 	SQL
 	Charset string
